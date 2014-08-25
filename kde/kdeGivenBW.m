@@ -20,6 +20,12 @@ function kde = kdeGivenBW(X, h, smoothness, params)
   if ~isfield(params, 'doBoundaryCorrection')
     params.doBoundaryCorrection = true;
   end
+  if ~isfield(params, 'estLowerBound')
+    params.estLowerBound = 0;
+  end
+  if ~isfield(params, 'estUpperBound')
+    params.estUpperBound = Inf;
+  end
 
   if ~params.doBoundaryCorrection
     augX = X;
@@ -55,20 +61,20 @@ function kde = kdeGivenBW(X, h, smoothness, params)
 
     end
     numAugPts = size(augX, 1);
-    fprintf('numPts = %d, numAugPts = %d\n', numPts, numAugPts);
+%     fprintf('numPts = %d, numAugPts = %d\n', numPts, numAugPts);
   end % ~params.doBoundaryCorrection
 
   % Now return the function handle
-  kde = @(arg) kdeIterative(arg, augX, h, kernelOrder);
+  kde = @(arg) kdeIterative(arg, augX, h, kernelOrder, params, numPts);
 end
 
 
 % A function which estimates the KDE at pts. We use this to construct the
 % function handle which will be returned.
-function ests = kdeIterative(pts, X, h, order)
+function ests = kdeIterative(pts, augX, h, order, params, numX)
 
   numPts = size(pts, 1);
-  numData = size(X, 1);
+  numData = size(augX, 1);
   maxNumPts = max(1e7, numData);
   ptsPerPartition = min( numPts, ceil(maxNumPts/numData) );
 
@@ -77,10 +83,15 @@ function ests = kdeIterative(pts, X, h, order)
   cumNumPts = 0;
   while cumNumPts < numPts
     currNumPts = min(ptsPerPartition, numPts - cumNumPts);
-    ests(cumNumPts+1 : cumNumPts + currNumPts) = ...
-      mean( kernel( pts(cumNumPts+1: cumNumPts+currNumPts, :), X, h, order), 2);
+    ests(cumNumPts+1 : cumNumPts + currNumPts) = sum( ...
+      kernel( pts(cumNumPts+1: cumNumPts+currNumPts, :), ...
+      augX, h, order), 2) / numX;
     cumNumPts = cumNumPts + currNumPts;
   end
+
+  % Now truncate those values below and above the bounds
+  ests = max(ests, params.estLowerBound);
+  ests = min(ests, params.estUpperBound);
 end
 
 

@@ -6,6 +6,7 @@ function [optBW, kdeFuncH] = kdePickBW(X, smoothness, params, bwLogBounds)
 
   % prelims
   numData = size(X, 1);
+  USE_DIRECT = false;
 
   % Shuffle the data
   shuffleOrder = randperm(numData);
@@ -25,39 +26,56 @@ function [optBW, kdeFuncH] = kdePickBW(X, smoothness, params, bwLogBounds)
   if ~isfield(params, 'numPartsKFCV')
     params.numPartsKFCV = 5;
   end
-  if ~isfield(params, 'numDiRectFunEvals')
-    params.numDiRectFunEvals = 20;
+  if ~isfield(params, 'numCandidates')
+    params.numCandidates = 20;
   end
   if ~isfield(params, 'getKdeFuncH')
     params.getKdeFuncH = true;
   end
-  if ~exist('bwLogBounds', 'var')
+  if ~exist('bwLogBounds', 'var') || isempty(bwLogBounds)
     bwLogBounds = log( [1e-4 10] * stdX );
+    bwLogBounds(2) = min(bwLogBounds(2), 1);
   end
 
-  % Now Set things up for DiRect
-  diRectBounds = bwLogBounds;
-  options.maxevals = params.numDiRectFunEvals;
-  kFoldFunc = @(t) kdeKFoldCV(t, X, smoothness, numParts);
-  [~, maxPt] = diRectWrap(kFoldFunc, diRectBounds, options);
-  optBW = exp(maxPt);
+  if USE_DIRECT
+  % Use DiRect to Optimize over h
+    diRectBounds = bwLogBounds;
+    options.maxevals = params.numCandidates;
+    kFoldFunc = @(t) kdeKFoldCV(t, X, smoothness, params);
+    [~, maxPt, history] = diRectWrap(kFoldFunc, diRectBounds, options);
+    optBW = exp(maxPt);
+  else
+  % Use just ordinary KFold CV
+    bwCandidates = linspace(bwLogBounds(1), bwLogBounds(2), ...
+      params.numCandidates);
+    bestLogLikl = -inf;
+    for candIter = 1:params.numCandidates
+      currLogLikl = kdeKFoldCV(bwCandidates(candIter), X, smoothness, params);
+      if currLogLikl > bestLogLikl
+        bestLogLikl = currLogLikl;
+        optBW = exp( bwCandidates(candIter) );
+      end 
+    end
+  end
   
   % Return a function handle
   if params.getKdeFuncH
-    kdeFuncH = kdeGivenBW(X, optBW, smoothness);
+    kdeFuncH = kdeGivenBW(X, optBW, smoothness, params);
   else
     kdeFuncH = [];
   end
 
 end
 
-function avgLogLikl = kdeKFoldCV(logBW, X, smoothness, numPartsKFCV) 
+function avgLogLikl = kdeKFoldCV(logBW, X, smoothness, params) 
 
   h = exp(logBW);
+  numPartsKFCV = params.numPartsKFCV;
   logLikls = zeros(numPartsKFCV, 1);
   numData = size(X, 1);
+  numDims = size(X, 2);
 
-  for kFoldIter = 1:numPartsKFoldCV
+  for kFoldIter = 1:numPartsKFCV
     % Set the partition up
     testStartIdx = round( (kFoldIter-1)*numData/numPartsKFCV + 1 );
     testEndIdx = round( kFoldIter*numData/numPartsKFCV );
@@ -69,12 +87,24 @@ function avgLogLikl = kdeKFoldCV(logBW, X, smoothness, numPartsKFCV)
     Xtr = X(trainIndices, :);
     Xte = X(testIndices, :);
     % Now Obtain the kde using Xtr
-    kdeTr = kdeGivenBW(Xte, h, smoothness);
+    kdeTr = kdeGivenBW(Xtr, h, smoothness, params);
     % Compute Log Likelihood
     Pte = kdeTr(Xte);
-    logLikls(kFoldIter) = mean(log(Pte));
+    logPte = log(Pte);
+    isInfLogPte = isinf(logPte);
+    % If fewer than 5% are infinities, then remove them
+    if sum(isInfLogPte) < 0.1*numTestData
+      logPte = logPte(~isInfLogPte);
+      logLikls(kFoldIter) = mean(logPte);
+    else
+%       fprintf('%d/%d  =%0.4f, points had -inf loglikl. Quitting\n', ...
+%         sum(isInfLogPte), numTestData, sum(isInfLogPte)/numTestData);
+      logLikls(kFoldIter) = -inf; 
+      break;
+    end
   end
 
   avgLogLikl = mean(logLikls);
+%   fprintf('bw=%f, log-likl=%f\n', h, avgLogLikl);
 
 end
