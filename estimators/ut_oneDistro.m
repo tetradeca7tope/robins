@@ -14,10 +14,6 @@ function ut_oneDistro
 
   % Test 1
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  N = 20;
-  X = rand(N, 1);
-  trueVals = [0];
-
   for testIdx = 1:numel(tests)
 
     % First generate the data
@@ -71,7 +67,7 @@ function doTests(X, functionals, trueVals, test, params, functionalParams)
     fprintf('  %s: Truth: %0.5f\n', functional, trueVal);
 
     % First Do a Data split version
-    params.dataSplit = true;
+%     params.dataSplit = true;
     [estDS, asympAnylsis] = estimateOneDistroFunctionals...
       (X, functional, functionalParams, params);
     % Now compute the errors
@@ -82,19 +78,19 @@ function doTests(X, functionals, trueVals, test, params, functionalParams)
     fprintf('    EstimDS : %.4f,  ErrDS : %.4f, CI: %s\n', ...
       estDS, errDS, mat2str(asympAnylsis.confInterval));
 
-    % Now do a non-Data split version
-    params.dataSplit = false;
-    [estNDS, asympAnylsis] = estimateOneDistroFunctionals...
-      (X, functional, functionalParams, params);
-    % Now compute the errors
-    errNDS = abs(trueVal - estNDS);
-    if trueVal ~= 0
-      errNDS = errNDS/trueVal;
-    end
-    fprintf('    EstimNDS : %.4f,  ErrDS : %.4f, CI: %s\n', ...
-      estNDS, errNDS, mat2str(asympAnylsis.confInterval));
-
-    fprintf('\n');
+%     % Now do a non-Data split version
+%     params.dataSplit = false;
+%     [estNDS, asympAnylsis] = estimateOneDistroFunctionals...
+%       (X, functional, functionalParams, params);
+%     % Now compute the errors
+%     errNDS = abs(trueVal - estNDS);
+%     if trueVal ~= 0
+%       errNDS = errNDS/trueVal;
+%     end
+%     fprintf('    EstimNDS : %.4f,  ErrDS : %.4f, CI: %s\n', ...
+%       estNDS, errNDS, mat2str(asympAnylsis.confInterval));
+% 
+%     fprintf('\n');
   end
 
 end

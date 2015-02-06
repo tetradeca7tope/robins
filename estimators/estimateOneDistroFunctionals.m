@@ -17,10 +17,6 @@ function [estim, asympAnylsis] = estimateOneDistroFunctionals...
     functionalParams = struct;
   end
 
-  % If not specified, split the data
-  if ~isfield(params, 'dataSplit')
-    params.dataSplit = true;
-  end
   % Whether to do Asymptotic Analysis or not
   if ~isfield(params, 'doAsympAnalysis')
     params.doAsympAnalysis = false;
@@ -29,32 +25,22 @@ function [estim, asympAnylsis] = estimateOneDistroFunctionals...
   if ~isfield(params, 'smoothness')
     params.smoothness = ceil(numDims/2);
   end
-  % The noise level
-  if ~isfield(params, 'normalNoiseLevel')
-    params.normalNoiseLevel = 0;
+  % Number of partitions to split the data into
+  if ~isfield(params, 'numPartitions')
+    params.numPartitions = 2;
   end
-
-  % Split the data if needed.
-  if params.dataSplit
-    numX1 = ceil(numX/2);
-    X1 = X(1:numX1, :);
-    X2 = X( (numX1+1):end, :);
-  else
-    X1 = X;
-    X2 = X;
-  end
-
 
   switch functional
 
-    case 'pAlpha'
-      [estim, asympAnylsis] = ...
-        pAlpha(X1, X2, functionalParams, params);
-
     case 'entropy'
       [estim, asympAnylsis] = ...
-        entropy(X1, X2, functionalParams, params);
+        entropy(X, functionalParams, params);
+
+    case 'pAlpha'
+      [estim, asympAnylsis] = ...
+        pAlpha(X, functionalParams, params);
       
   end
 
 end
+

@@ -1,4 +1,4 @@
-function [estim, asympAnylsis] = estimateTwoDistroFunctionals...
+function [estim, asympAnalysis, bwX, bwY] = estimateTwoDistroFunctionals...
   (X, Y, functional, functionalParams, params)
 % X, Y are data from densities f and g respectively.
 % functional is a string specifying which functional to estimate. See below.
@@ -18,40 +18,28 @@ function [estim, asympAnylsis] = estimateTwoDistroFunctionals...
     functionalParams = struct;
   end
 
-  % If not specified, split the data
-  if ~isfield(params, 'dataSplit')
-    params.dataSplit = true;
-  end
   % Whether to do Asymptotic Analysis or not
   if ~isfield(params, 'doAsympAnalysis')
     params.doAsympAnalysis = false;
   end
   % The smoothness of the function for the KDE
   if ~isfield(params, 'smoothness')
-    smoothness = ceil(numDims/2);
+    params.smoothness = ceil(numDims/2);
   end
-
-  % Split the data if needed.
-  if params.dataSplit
-    numX1 = ceil(numX/2);
-    numY1 = ceil(numY/2);
-    X1 = X(1:numX1, :);
-    X2 = X( (numX1+1):end, :);
-    Y1 = Y(1:numY1, :);
-    Y2 = Y( (numY1+1):end, :);
-  else
-    X1 = X;
-    X2 = X;
-    Y1 = Y;
-    Y2 = Y;
+  % Number of partitions
+  if ~isfield(params, 'numPartitions')
+    params.numPartitions = 2;
   end
-
 
   switch functional
 
+    case 'hellingerDiv'
+      [estim, asympAnalysis, bwX, bwY] = ...
+        hellingerDivergence(X, Y, functionalParams, params);
+
     case 'condTsallisDiv'
-      [estim, asympAnylsis] = ...
-        conditionalTsallisDivergence(X1, X2, Y1, Y2, functionalParams, params);
+      [estim, asympAnalysis, bwX, bwY] = ...
+        conditionalTsallisDivergence(X, Y, functionalParams, params);
 
     case 'condTsallisMI'
 

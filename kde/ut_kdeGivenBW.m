@@ -27,7 +27,7 @@ h = 0.05;
 kde = kdeGivenBW(X, h, 4);
 
 [~, f] = kde01(X, [], doLogit);
-% Pl0t the density.
+% Plot the density.
 t = linspace(0,1,resolution)'; 
 p = kde(t);
 % obtain true density 
@@ -40,9 +40,9 @@ titlestr = sprintf('Estimated(b) vs True(r)\nh');
 title(titlestr);
 area = numerical_1D_integration(t, p);
 fprintf('Area under estimated curve: %f\n', area);
-pause;
 
 %Test 2: Uniform 2D
+fprintf('\n\nTest 2: 2D Distribution\n');
 X = rand(2000,2); X = 0.25 + 0.5*X;
 % [~, f] = kde01(X, [], doLogit);
 f = kdeGivenBW(X, h, 4);
@@ -52,6 +52,7 @@ P = reshape(p, resolution, resolution);
 figure;
 surfc(T1, T2, P);
 area = numerical_2D_integration(P, T1, T2);
+fprintf('Area under estimated curve: %f\n', area);
 area,
 
 

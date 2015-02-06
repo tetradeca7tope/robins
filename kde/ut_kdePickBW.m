@@ -54,7 +54,7 @@ P = reshape(p, resolution, resolution);
 figure;
 surfc(T1, T2, P);
 area = numerical_2D_integration(P, T1, T2);
-area,
+fprintf('Area under estimated curve: %f\n', area);
 pause,
 
 % Test 3: A 1D distribution
