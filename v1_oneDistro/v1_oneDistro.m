@@ -1,15 +1,29 @@
 % Tests the asymptotic confidence intervals for the entropy.
 
-addpath ../kde/
+% addpath ../../if-estimators/
+% rmpath ../estimators/
+
 addpath ../estimators/
+addpath ../kde/
+rmpath ../../if-estimators/
+
 addpath ../plugin/
 addpath ~/libs/kky-matlab/utils/
 addpath ~/libs/kky-matlab/ancillary/
 clear all;
 close all;
 
+
 % First specify the functional
-functional = 'entropy';
+functional = 'shannonEntropy';
+
+% Define a function handle
+switch functional
+
+  case 'shannonEntropy'
+    estFunctional = @shannonEntropy;
+
+end
 % And the distribution
 distributionIndex = 2;
 
@@ -25,7 +39,7 @@ params.estLowerBound = 0.4; % lower bounds for density estimates
 params.smoothness = 2;
 params.bandwidth = @(arg) 1.06 * std(arg) * size(arg,1)^(-1/5);
 % params.bandwidth = []; %@(arg) 1.06 * std(arg) * size(arg,1)^(-1/5);
-params.numPartitions = 2;
+params.numPartitions = 1;
 
 % Some parameters for generating the distribution
 switch distributionIndex
@@ -73,8 +87,10 @@ for testIdx = 1:numTests
   end
 
   % Estimate the quantity 
-  [estim, asympAnalysis] = estimateOneDistroFunctionals...
-    (X, functional, functionalParams, params);
+%   [estim, asympAnalysis] = estFunctional(X, ...
+%     functionalParams, params);
+  [estim, asympAnalysis] = estimateOneDistroFunctionals(X, functional, ...
+    functionalParams, params);
 
   % Check for trapping and record values
   estimates(testIdx) = estim;

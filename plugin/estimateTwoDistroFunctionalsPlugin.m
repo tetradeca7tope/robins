@@ -20,14 +20,26 @@
 
   % The smoothness of the function for the KDE
   if ~isfield(params, 'smoothness')
-    params.smoothness = ceil(numDims/2);
+    params.smoothness = max(ceil(numDims/2), 2);
   end
 
   if isstr(functional)
     switch functional
 
       case 'hellingerDiv'
-        func = @(t, densX, densY) hellingerFunctional(t, densX, densY);
+        func = @(t, densX, densY, p) hellingerFunctional(t, densX, densY, p);
+
+      case 'klDiv'
+        func = @(t, densX, densY, p) klFunctional(t, densX, densY, p);
+
+      case 'renyiDiv'
+        func = @(t, densX, densY, p) renyiDFunctional(t, densX, densY, p);
+
+      case 'tsallisDiv'
+        func = @(t, densX, densY, p) tsallisDFunctional(t, densX, densY, p);
+
+      case 'condTsallisDiv'
+        func = @(t, densX, densY, p) tsallisDFunctional(t, densX, densY, p);
 
     end
   else
@@ -52,27 +64,51 @@
   densEstY = kdeGivenBW(Y, bwY, params.smoothness, params);
   
   % Now obtain the estimate
-  estim = numIntFuncCompute(func, densEstX, densEstY, numDims);
+  estim = numIntFuncCompute(func, densEstX, densEstY, numDims, functionalParams);
 
 end
 
 
-function val = numIntFuncCompute(func, densX, densY, numDims)
+function val = numIntFuncCompute(func, densX, densY, numDims, functionalParams)
   if numDims == 1
     t = linspace(0, 1, 1002)'; t = t(2:end);
-    val = mean( func(t, densX, densY) );
+    val = mean( func(t, densX, densY, functionalParams) );
 
   elseif numDims == 2
-    t = linspace(0, 1, 102); t = t(2:end);
+    t = linspace(0, 1, 52); t = t(2:end);
     [r, s] = meshgrid(t,t);
     T = [r(:) s(:)];
-    val = mean( func(T, densX, densY) );
+    val = mean( func(T, densX, densY, functionalParams) );
   end
 end
 
 
-function hellingerFuncVals = hellingerFunctional(t, densX, densY)
+function hellingerFuncVals = hellingerFunctional(t, densX, densY, functionalParams)
   densXatT = densX(t);
   densYatT = densY(t);
   hellingerFuncVals = 1 - sqrt(densXatT .* densYatT);
 end
+
+
+function klFuncVals = klFunctional(t, densX, densY, functionalParams)
+  densXatT = densX(t);
+  densYatT = densY(t);
+  klFuncVals = densXatT .* log( densXatT ./ densYatT );
+end
+
+function renyiDFuncVals = renyiDFunctional(t, densX, densY, functionalParams)
+  densXatT = densX(t);
+  densYatT = densY(t);
+  alpha = functionalParams.alpha;
+  intFuncVals = densXatT.^alpha .* densYatT.^(1-alpha);
+  renyiDFuncVals = 1/(alpha-1) * log(mean(intFuncVals));
+end
+
+function tsallisDFuncVals = tsallisDFunctional(t, densX, densY, functionalParams)
+  densXatT = densX(t);
+  densYatT = densY(t);
+  alpha = functionalParams.alpha;
+  intFuncVals = densXatT.^alpha .* densYatT.^(1-alpha);
+  tsallisDFuncVals = 1/(alpha-1) * (mean(intFuncVals)-1);
+end
+

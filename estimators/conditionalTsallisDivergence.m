@@ -23,7 +23,7 @@ function [estim, asympAnalysis] = ...
   smoothness = params.smoothness;
 
   % First construct the KDE
-  if ~isfield(params, 'bandwidth') | isempty(params.bandwidht)
+  if ~isfield(params, 'bandwidth') | isempty(params.bandwidth)
   % Use cross validation to pick the bandwidth
     [optBW, kdeXZ] = kdePickBW(V1, smoothness, params);
     [optBW, kdeYZ] = kdePickBW(W1, smoothness, params);

@@ -4,17 +4,20 @@ function ut_oneDistro
   addpath ../kde
   close all;
   clear all;
+  rng('default');
 
-  functionals = {'entropy'};
+  functionals = {'shannonEntropy'};
   tests = {'1D-Uniform', '1D-Conv', '2D-Conv'};
   functionalParams = struct;
   params = struct;
   params.alpha = 0.05;
   params.doAsympAnalysis = true;
+  params.numPartitions = 'loo';
+  params.doBoundaryCorrection = true;
 
   % Test 1
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  for testIdx = 1:numel(tests)
+  for testIdx = 1:2 %numel(tests)
 
     % First generate the data
     if testIdx == 1
@@ -28,7 +31,6 @@ function ut_oneDistro
       Z = rand(N, 1+gamma); B = double(rand(N, 1) < 0.5);
       X = B.* Z(:,1) + (1-B).*max(Z(:,2:end), [], 2);
       trueDensity = @(t) 0.5 + 0.5*gamma* t.^(gamma-1);
-      params.estLowerBound = 0.4;
 
       % Compute the true Entropy
       entropyFunc = @(t) trueDensity(t) .* log( trueDensity(t) );
@@ -43,7 +45,6 @@ function ut_oneDistro
       Z = rand(N, 1+gamma); B = double(rand(N, 1) < 0.5);
       Y = B.* Z(:,1) + (1-B).*max(Z(:,2:end), [], 2);
       X = [Y rand(N, 1)];
-      params.estLowerBound = 0.4;
       % Since the 2nd dimension is the uniform density, the trueVals will be the
       % same as for testIdx = 2
 
@@ -72,9 +73,6 @@ function doTests(X, functionals, trueVals, test, params, functionalParams)
       (X, functional, functionalParams, params);
     % Now compute the errors
     errDS = abs(trueVal - estDS);
-    if trueVal ~= 0
-      errDS = errDS/trueVal;
-    end
     fprintf('    EstimDS : %.4f,  ErrDS : %.4f, CI: %s\n', ...
       estDS, errDS, mat2str(asympAnylsis.confInterval));
 

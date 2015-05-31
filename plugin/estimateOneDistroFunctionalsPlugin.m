@@ -19,13 +19,13 @@
 
   % The smoothness of the function for the KDE
   if ~isfield(params, 'smoothness')
-    params.smoothness = ceil(numDims/2);
+    params.smoothness = max(ceil(numDims/2), 2);
   end
 
   if isstr(functional)
     switch functional
 
-      case 'entropy'
+      case 'shannonEntropy'
         func = @(t, dens) entropyFunctional(t, dens);
 
     end
@@ -51,13 +51,13 @@ end
 function val = numIntFuncCompute(func, dens, numDims)
   if numDims == 1
     t = linspace(0, 1, 1002)'; t = t(2:end);
-    val = mean( func(t, dens) );
+    val = nanmean( func(t, dens) );
 
   elseif numDims == 2
-    t = linspace(0, 1, 102); t = t(2:end);
+    t = linspace(0, 1, 52); t = t(2:end);
     [r, s] = meshgrid(t,t);
     T = [r(:) s(:)];
-    val = mean( func(T, dens) );
+    val = nanmean( func(T, dens) );
   end
 end
 

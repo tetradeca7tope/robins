@@ -1,0 +1,48 @@
+% Script to plot v3 errors
+% The following should be loaded: estimMethods, functional, methErrors,
+% nCands, numExperiments, 
+
+plotColours = {'r', 'k', 'b', 'g', 'm', 'c', [255 128 0]/255, ...
+  [76, 0, 153]/253, [102 102 0]/255, 'y'};
+plotShapes = {'+', '*','o',  'x', 's', 'd', '^', 'p', '>', 'v'};
+plotShapesDot = {'+.', '*.','o.',  'x.', 's.', 'd.', '^.', 'p.', '>.', 'v.'};
+plotShapesDash = {'+-', '*-','o-',  'x-', 's-', 'd-', '^-', 'p-', '>-', 'v-'};
+plotFunc = @semilogx;
+plotFunc = @loglog;
+plotFunc = @semilogy;
+
+figure;
+
+numMethods = numel(estimMethods);
+numNCands = numel(nCands);
+
+% Obtain the means and stds
+methErrMeans = zeros(numMethods, numNCands);
+methErrStds = zeros(numMethods, numNCands);
+for i = 1:numMethods
+  methErrMeans(i,:) = mean(methErrors{i});
+  methErrStds(i,:) = std(methErrors{i})/sqrt(numExperiments);
+end
+
+% First plot the bullets
+for i = 1:numMethods
+  plotFunc(nCands, methErrMeans(i,:), plotShapesDash{i}, 'Color', plotColours{i});
+  hold on,
+end
+legend(estimMethods);
+
+% Now plot error bars
+for i = 1:numMethods
+  errorbar(nCands, methErrMeans(i,:), methErrStds(i,:), 'Color', plotColours{i});
+end
+
+% Limits
+allVals = cell2mat(methErrors); allVals = allVals(:);
+maxVal = max(allVals);
+minVal = min(allVals);
+yMaxVal = maxVal + 0.1* (maxVal - minVal);
+yMinVal = minVal - 0.1* (maxVal - minVal);
+% Set X and Y limits 
+xlim([0 nCands(end)]);
+ylim([yMinVal, yMaxVal]);
+

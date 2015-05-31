@@ -2,22 +2,22 @@ function [avg, asympAnalysis, bwX, bwY] = getTwoDistroInfFunAvgs(X, Y, ...
   infFunX, infFunY, asympVarFun, params)
 % This function will sum the influence functions over the partitions
 
-  numPartitions = params.numPartitions;
-  infFunXPartTerms = zeros(numPartitions, 1);
-  infFunYPartTerms = zeros(numPartitions, 1);
-  asympVarXPartTerms = zeros(numPartitions, 1);
-  asympVarYPartTerms = zeros(numPartitions, 1);
-  partWeightsX = zeros(numPartitions, 1);
-  partWeightsY = zeros(numPartitions, 1);
   n = size(X, 1);
   m = size(Y, 1);
+  numPartitions = params.numPartitions;
+  numAvgPartitions = params.numAvgPartitions;
 
-  for k = 1:numPartitions
+  infFunXPartTerms = zeros(numAvgPartitions, 1);
+  infFunYPartTerms = zeros(numAvgPartitions, 1);
+  asympVarXPartTerms = zeros(numAvgPartitions, 1);
+  asympVarYPartTerms = zeros(numAvgPartitions, 1);
+  partWeightsX = zeros(numAvgPartitions, 1);
+  partWeightsY = zeros(numAvgPartitions, 1);
+
+  for k = 1:numAvgPartitions
 
     [Xden, Xest] = getDenEstSamples(X, numPartitions, k);
     [Yden, Yest] = getDenEstSamples(Y, numPartitions, k);
-    partWeightsX(k) = size(Xest, 1);
-    partWeightsY(k) = size(Yest, 1);
 
       % First determine the bandwidths for density estimation
       if k == 1
@@ -46,6 +46,8 @@ function [avg, asympAnalysis, bwX, bwY] = getTwoDistroInfFunAvgs(X, Y, ...
     % Now obtain the sum of influence functions
     infFunXPartTerms(k) = sum( infFunX(densXatX, densYatX) );
     infFunYPartTerms(k) = sum( infFunY(densXatY, densYatY) );
+    partWeightsX(k) = size(Xest, 1);
+    partWeightsY(k) = size(Yest, 1);
 
     % If doing asymptotic analysis
     if params.doAsympAnalysis
@@ -57,7 +59,8 @@ function [avg, asympAnalysis, bwX, bwY] = getTwoDistroInfFunAvgs(X, Y, ...
   end
 
   % Now return the average as the influence function
-  avg = sum(infFunXPartTerms)/n + sum(infFunYPartTerms)/m;
+  avg = sum(infFunXPartTerms)/sum(partWeightsX) + ...
+        sum(infFunYPartTerms)/sum(partWeightsY);
 
   if params.doAsympAnalysis
     asympVarX = (partWeightsX' * asympVarXPartTerms)/n;

@@ -12,7 +12,6 @@ function kde = kdeGivenBW(X, h, smoothness, params)
   % prelims
   numDims = size(X, 2);
   numPts = size(X, 1);
-  kernelOrder = floor(smoothness);
 
   if ~exist('params', 'var')
     params = struct;
@@ -65,13 +64,13 @@ function kde = kdeGivenBW(X, h, smoothness, params)
   end % ~params.doBoundaryCorrection
 
   % Now return the function handle
-  kde = @(arg) kdeIterative(arg, augX, h, kernelOrder, params, numPts);
+  kde = @(arg) kdeIterative(arg, augX, h, smoothness, params, numPts);
 end
 
 
 % A function which estimates the KDE at pts. We use this to construct the
 % function handle which will be returned.
-function ests = kdeIterative(pts, augX, h, order, params, numX)
+function ests = kdeIterative(pts, augX, h, smoothness, params, numX)
 
   numPts = size(pts, 1);
   numData = size(augX, 1);
@@ -83,9 +82,13 @@ function ests = kdeIterative(pts, augX, h, order, params, numX)
   cumNumPts = 0;
   while cumNumPts < numPts
     currNumPts = min(ptsPerPartition, numPts - cumNumPts);
-    ests(cumNumPts+1 : cumNumPts + currNumPts) = sum( ...
-      kernel( pts(cumNumPts+1: cumNumPts+currNumPts, :), ...
-      augX, h, order), 2) / numX;
+    if isstr(smoothness) & strcmp(lower(smoothness(1:5)), 'gauss')
+      K = kdeGaussKernel(pts(cumNumPts+1: cumNumPts+currNumPts, :), augX, h);
+    else
+      K = kdeLegendreKernel( pts(cumNumPts+1: cumNumPts+currNumPts, :), ...
+            augX, h, smoothness);
+    end
+    ests(cumNumPts+1 : cumNumPts + currNumPts) = sum(K,2)/numX;
     cumNumPts = cumNumPts + currNumPts;
   end
 

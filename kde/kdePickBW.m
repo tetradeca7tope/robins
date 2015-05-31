@@ -36,7 +36,7 @@ function [optBW, kdeFuncH] = kdePickBW(X, smoothness, params, bwLogBounds)
     if isfield(params, 'bwLogBounds')
       bwLogBounds = params.bwLogBounds;
     else
-      bwLogBounds = log( [1e-4 10] * stdX );
+      bwLogBounds = log( [1e-2 10] * stdX );
       bwLogBounds(2) = min(bwLogBounds(2), 1);
     end
   end

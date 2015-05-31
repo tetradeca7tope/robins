@@ -18,28 +18,27 @@ function [estim, asympAnalysis, bwX, bwY] = estimateTwoDistroFunctionals...
     functionalParams = struct;
   end
 
-  % Whether to do Asymptotic Analysis or not
-  if ~isfield(params, 'doAsympAnalysis')
-    params.doAsympAnalysis = false;
-  end
-  % The smoothness of the function for the KDE
-  if ~isfield(params, 'smoothness')
-    params.smoothness = ceil(numDims/2);
-  end
-  % Number of partitions
-  if ~isfield(params, 'numPartitions')
-    params.numPartitions = 2;
-  end
-
   switch functional
+
+    case 'klDiv'
+      [estim, asympAnalysis, bwX, bwY] = ...
+        klDivergence(X, Y, functionalParams, params);
 
     case 'hellingerDiv'
       [estim, asympAnalysis, bwX, bwY] = ...
         hellingerDivergence(X, Y, functionalParams, params);
 
+    case 'renyiDiv'
+      [estim, asympAnalysis, bwX, bwY] = ...
+        renyiDivergence(X, Y, functionalParams, params);
+
+    case 'tsallisDiv'
+      [estim, asympAnalysis, bwX, bwY] = ...
+        tsallisDivergence(X, Y, functionalParams, params);
+
     case 'condTsallisDiv'
       [estim, asympAnalysis, bwX, bwY] = ...
-        conditionalTsallisDivergence(X, Y, functionalParams, params);
+        condTsallisDivergence(X, Y, functionalParams, params);
 
     case 'condTsallisMI'
 

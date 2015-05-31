@@ -1,28 +1,19 @@
 function [estim, asympAnalysis, bwX, bwY] = hellingerDivergence(X, Y, ...
   functionalParams, params)
-% Estimate for the Hellinger Divergence
-  [estim, asympAnalysis, bwX, bwY] = getTwoDistroInfFunAvgs(X, Y, ...
-    @hellingerInfFunX, @hellingerInfFunY, @hellingerAsympVar, params);
-end
+% Estimates the Hellinger Divergence between f and g where X comes from f and Y
+% comes from g.
+  if isempty(functionalParams), functionalParams = struct;
+  end
+  functionalParams.alpha = 0.5;
 
-function infFunVals = hellingerInfFunX(densXatX, densYatX)
-% densXatX and densYatX are the densities of X and Y respectively (or their
-% estimates) at the X points.
-  infFunVals = 1 - 0.5 * sqrt(densYatX)./sqrt(densXatX);
-end
+  [estim1, asymp1, bwX, bwY] = fAlphaGBeta(X, Y, functionalParams, params);
+  estim = 1 - estim1;
+  if params.doAsympAnalysis
+    asympAnalysis = asymp1;
+    asympAnalysis.confInterval(1) = 1 - asymp1.confInterval(2);
+    asympAnalysis.confInterval(2) = 1 - asymp1.confInterval(1);
+  else
+    asympAnalysis = [];
+  end
 
-function infFunVals = hellingerInfFunY(densXatY, densYatY)
-% densXatY and densYatY are the densities of X and Y respectively (or their
-% estimates) at the Y points.
-  infFunVals = - 0.5 * sqrt(densXatY)./sqrt(densYatY);
-end
-
-function [asympVarX, asympVarY] = hellingerAsympVar(densXatX, densXatY, ...
-  densYatX, densYatY)
-% asympVarX and asympVarY are the asymptotic variances of the X and Y influence
-% functions.
-  asympVarX = 0.5 - ...
-    0.25 * (mean(sqrt(densYatX)./sqrt(densXatX)) + ...
-             mean(sqrt(densXatY)./sqrt(densYatY)) );
-  asympVarY = asympVarX; 
 end
